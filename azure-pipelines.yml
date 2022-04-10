@@ -1,0 +1,35 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- None
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: Docker@2
+  displayName: "Building and pushing BE image"
+  inputs:
+    containerRegistry: 'morganmceacr'
+    repository: 'redis'
+    command: 'buildAndPush'
+    Dockerfile: '**/Dockerfile'
+
+- task: Docker@2
+  inputs:
+    containerRegistry: 'morganmceacr'
+    repository: 'azure-vote-front'
+    command: 'buildAndPush'
+    Dockerfile: '**/Dockerfile-for-app-service'
+- task: CmdLine@2
+  inputs:
+    script: 'sed -i ''s/latest/$Build.BuildId)/g'' azure-vote-all-in-one-redis.yaml'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: 'azure-vote-all-in-one-redis.yaml'
+    ArtifactName: 'k8s-manifest'
+    publishLocation: 'Container'
